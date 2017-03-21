@@ -1,0 +1,81 @@
+---
+infochimps_schema:
+  title: Infochimps Simple Schema (ICSS)
+  version: 0.1.1
+  generated_at: Tue Aug 03 17:08:40 +0000 2010
+  url: "http://infochimps.org/datasets/d35-million-us-domestic-flights-from-1990-to-2009.yaml"
+  description: >-
+    This is an Infochimps Simple Schema (ICSS).
+
+    It describes data on Infochimps.org and is meant to be both human
+    and machine readable.
+
+    An ICSS file is distributed with every download on Infochimps and
+    is also available by request to the above URL.
+    
+    ICSS files bundled with downloads are generated at the time the
+    download was created so they can become out of date as changes are
+    made to the data.  If this ICSS came with data you downloaded then
+    it is possible that it is already out of date.  You can get the
+    most recent version at the URL above.
+
+dataset:
+  id:                  16091
+  title:               3.5 Million+ US Domestic Flights from 1990 to 2009
+  subtitle:            ~
+  main_link:           ~
+  url:                 "http://infochimps.org/datasets/d35-million-us-domestic-flights-from-1990-to-2009"
+  created_at:          "Tue Aug 03 15:39:04 UTC 2010"
+  updated_at:          "Tue Aug 03 15:39:05 UTC 2010"  
+  tags:              [ airline,airport,aviation,big,bts,domestic,flight,flights,government,metropolitan,network,rita,statistics,transportation,transtats ]
+  categories:        [ Economics, Social Sciences ]
+  created_by:
+    id:                675  
+    username:          Ganglion
+    name:              Jacob Perkins
+    institution:       ~
+    main_link:         ~
+    url:               "http://infochimps.org/users/Ganglion"
+  description: >-
+    h2. Description:
+    
+    Over 3.5 million monthly domestic flight records from 1990 to 2009. Data are arranged as an adjacency list with metadata. Ready for immediate database import and analysis.
+    
+    h2. Fields:
+    
+    table{backgroud:grey}.
+    |Short name|Type|Description|
+    |Origin|String| Three letter airport code of the origin airport |
+    |Destination|String| Three letter airport code of the destination airport |
+    |Origin City|String| Origin city name |
+    |Destination City|String| Destination city name |
+    |Passengers|Integer| Number of passengers transported from origin to destination |
+    |Seats|Integer| Number of seats available on flights from origin to destination |
+    |Flights|Integer| Number of flights between origin and destination (multiple records for one month, many with flights > 1)|
+    |Distance|Integer| Distance (to nearest mile) flown between origin and destination |
+    |Fly Date|Integer| The date (yyyymm) of flight |
+    |Origin Population|Integer| Origin city's population as reported by US Census |
+    |Destination Population|Integer| Destination city's population as reported by US Census |
+    
+    h2. Snippet:
+    
+    |MFR|RDM|Medford, OR      |Bend, OR|  0|  0|1| 156|200810| 200298|157730|
+    |AMA|EKO|Amarillo, TX     |Elko, NV|124|124|1| 858|199308| 202960| 40259|
+    |TUS|EKO|Tucson, AZ       |Elko, NV|112|124|1| 658|199308| 711392| 40259|
+    |AMA|EKO|Amarillo, TX     |Elko, NV|115|124|1| 858|199406| 206315| 41668|
+    |ICT|EKO|Wichita, KS      |Elko, NV|100|124|1|1007|199607| 552884| 45034|
+    |SPS|EKO|Wichita Falls, TX|Elko, NV|122|124|1|1059|199603| 147683| 45034|
+    
+    h3. Source(s)
+    
+    1. "US Census Bureau":http://www.census.gov/
+    2. "RITA/Transtats, Bureau of Transportation Statistics":http://www.bts.gov/
+    
+  license:
+      
+  sources:
+    
+  packages: 
+      
+  fields:
+    
