@@ -77,18 +77,19 @@ def write_file_to_bucket(bucketname, data, filepath):
     conn = conn.get_bucket(bucketname)
     # Write dataframe to buffer
     csv_buffer = StringIO.StringIO()
-    data.to_csv(csv_buffer, index=False)
+    data.to_csv(csv_buffer, index=True)
 
     # Upload CSV to S3
     file_object = conn.new_key(filepath)
     file_object.set_contents_from_string(csv_buffer.getvalue())
 
 if __name__ == '__main__':
-    original_df = load_hub_data('data/2004.csv', subset=10000)
+    original_df = load_hub_data('data/2004.csv', subset=100000)
     routes = get_flight_routes(original_df, 2004)
     closure_dict = create_closure_indicator(routes)
     new_data = create_closure_column(original_df, closure_dict)
-    write_file_to_bucket('flight-final-project', new_data, 'test.csv')
+    save_new_csv(new_data, 'test.csv')
+    #write_file_to_bucket('flight-final-project', new_data, 'test.csv')
 
 
 # def efficient_file_read(filepath, hubs):
