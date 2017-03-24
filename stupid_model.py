@@ -13,7 +13,7 @@ def get_accuracy_score(X_train, X_test, y_train, y_test, num_trees, max_features
     '''
     rf = RandomForestClassifier(
         n_estimators=num_trees, max_features=max_features, n_jobs=-1)
-        rf.fit(X_train, y_train)
+    rf.fit(X_train, y_train)
     y_pred = rf.predict(X_test)
     return rf.score(X_test, y_test), max_features
 
@@ -24,7 +24,8 @@ def get_and_group_data(filepath):
     groupby = groupby[np.isfinite(groupby['Closure'])]
     y = groupby['Closure']
     del groupby['Closure']
-    X = groupby[['ArrDelay', 'DepDelay', 'Distance', 'NASDelay']]
+    X = groupby[np.isfinite(
+        groupby[['ArrDelay', 'DepDelay', 'Distance', 'NASDelay']])]
     return X, y
 
 if __name__ == '__main__':
