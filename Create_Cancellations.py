@@ -42,7 +42,6 @@ def get_flight_routes(data, year):
 
 def create_closure_indicator(route_dates):
     threshold = pd.to_datetime('2004-12-24')
-    test = []
     for route in route_dates.keys():
         if route_dates[route][1] == route_dates[route][0]:
             route_dates[route] = route_dates[route] + (-1,)
@@ -55,13 +54,14 @@ def create_closure_indicator(route_dates):
 
 def create_closure_column(data, closure_dict):
     closure_column = []
-    for index_num, route in enumerate(data['route']):
-        if closure_dict[route][2] == -1:
-            data.drop(data.index[index_num])
-        else:
-            closure_column.append(closure_dict[route][2])
+    for route in data['route']:
+        closure_column.append(closure_dict[route][2])
     data['Closure'] = pd.Series(closure_column)
-    del data['index']
+    for index_num, indicator in enumerate(data['Closure']):
+        index_list = []
+        if indicator == -1:
+            index_list.append(index_num)
+    data.drop(data.index[index_list], inplace=True)
     return data
 
 

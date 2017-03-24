@@ -6,7 +6,12 @@ from datetime import datetime
 import multiprocessing
 
 
-def get_accuracy_score(X_train, X_test, y_train, y_test, num_trees, max_features):
+def run_logistic_regression(X_train, X_test, y_train, y_test, num_trees, max_features):
+
+    return
+
+
+def run_random_forest(X_train, X_test, y_train, y_test, num_trees, max_features):
     '''
     INPUT: X_train,X_test,y_train,y_test
     OUTPUT: score, number of trees
@@ -22,15 +27,17 @@ def get_and_group_data(filepath):
     data = pd.read_csv(filepath)
     groupby = data.groupby(['route']).mean()
     groupby = groupby[np.isfinite(groupby['Closure'])]
+    groupby.dropna(inplace=True)
     y = groupby['Closure']
     del groupby['Closure']
-    X = groupby[np.isfinite(
-        groupby[['ArrDelay', 'DepDelay', 'Distance', 'NASDelay']])]
-    return X, y
+    X = groupby[['ArrDelay', 'DepDelay', 'Distance',
+                 'NASDelay']]
+    return groupby, X, y
 
 if __name__ == '__main__':
     startTime = datetime.now()
-    X, y = get_and_group_data('data/2004_indicators.csv')
+    groupby, X, y = get_and_group_data('data/2004_indicators.csv')
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.2)
-    print get_accuracy_score(X_train, X_test, y_train, y_test, 10000, 'log2')
+    print len(groupby), len(X)
+    print run_random_forest(X_train, X_test, y_train, y_test, 1, 'log2')
     print datetime.now() - startTime
