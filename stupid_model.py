@@ -10,14 +10,19 @@ from datetime import datetime
 import multiprocessing
 
 
-def fit_log_reg_model(X_train, X_test, y_train):
-    model = LogisticRegression()
+def get_logit_results(X, y):
+    model = sm.Logit(y, X).fit()  # using statsmodels because they don't apply
+    # Regularization so we can get non-normalized
+    # coefficient values
+    return model.summary()
+
+
+def plot_ROC_curve(X_train, y_train, labels):
+    model = LogisticRegression()  # Using sklearn here because it has way more
+    # built in functionality to get better predictions
+    # compared to statsmodels
     model.fit(X_train, y_train)
     probabilities = model.predict_proba(X_test)[:, 1]
-    return model, probabilities
-
-
-def plot_ROC_curve(model, probabilities, labels):
     thresholds = np.sort(probabilities)
     tprs = []
     fprs = []
@@ -68,8 +73,8 @@ def get_and_group_data(filepath):
     groupby = data.groupby(['route']).mean()
     groupby = groupby[np.isfinite(groupby['Closure'])]
     groupby.dropna(inplace=True)
+    groupby = groupby[(groupby['Closure'] <= 1) & (groupby['Closure'] >= 0)]
     y = groupby['Closure']
-    del groupby['Closure']
     X = groupby[['ArrDelay', 'DepDelay', 'Distance',
                  'NASDelay']]
     return groupby, X, y
@@ -77,7 +82,7 @@ def get_and_group_data(filepath):
 if __name__ == '__main__':
     startTime = datetime.now()
     groupby, X, y = get_and_group_data('data/2005_indicators.csv')
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.2)
-    model, probabilities = fit_log_reg_model(X_train, X_test, y_train)
-    tprs, fprs, thresholds = plot_ROC_curve(model, probabilities, y_test)
+    #X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.2)
+    print get_logit_results(X, y)
+    #plot_ROC_curve(X_train, y_train, y_test)
     print datetime.now() - startTime
