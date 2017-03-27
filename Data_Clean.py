@@ -10,12 +10,9 @@ hubs = ['ORD', 'ATL', 'DFW', 'LAX', 'DEN', 'SFO', 'STL', 'EWR', 'PHX', 'PIT']
 #'LGA', 'DTW', 'CLT', 'BOS', 'MSP', 'DCA', 'IAH', 'PHL', 'MEM', 'MCO']
 
 
-def load_hub_data(filepath, subset=None):
+def load_data(filepath, subset=None):
     data = pd.read_csv(filepath, nrows=subset)
-
-    # maj_20_hubs = data[data['Origin'].isin(hubs)]
-    # maj_20_hubs.reset_index(inplace=True)
-    return maj_20_hubs
+    return data
 
 
 def get_flight_routes(data, year):
@@ -42,7 +39,7 @@ def get_flight_routes(data, year):
 
 
 def clean_data(data):
-    data = data.drop(['Unnamed: 0', 'TailNum', 'Year', 'Month', 'DayOfWeek',
+    data = data.drop(['TailNum', 'Year', 'Month', 'DayOfWeek',
                       'DayofMonth', 'CancellationCode'], axis=1)
     data['date'] = pd.to_datetime(data['date'])
     return data
@@ -93,7 +90,7 @@ def write_file_to_bucket(bucketname, data, filepath):
 
 
 if __name__ == '__main__':
-    original_df = load_hub_data('../../../dev/2004.csv')
+    original_df = load_data('../../../dev/2004.csv')
     routes = get_flight_routes(original_df, 2004)
     closure_dict = create_closure_indicator(routes)
     new_data = create_closure_column(original_df, closure_dict)
