@@ -6,12 +6,13 @@ import boto
 import os
 import StringIO
 
-hubs = ['ORD', 'ATL', 'DFW', 'LAX', 'DEN', 'SFO', 'STL', 'EWR', 'PHX', 'PIT']
-#'LGA', 'DTW', 'CLT', 'BOS', 'MSP', 'DCA', 'IAH', 'PHL', 'MEM', 'MCO']
+Carriers = ['AA', 'AS', 'B6', 'CO', 'DL', 'EV',
+            'F9', 'HA', 'HP', 'NK', 'OO', 'UA', 'VX', 'WN', 'US']
 
 
 def load_data(filepath, subset=None):
     data = pd.read_csv(filepath, nrows=subset)
+    #data = data[data['UniqueCarrier'].isin(Carriers)]
     return data
 
 
@@ -20,8 +21,8 @@ def get_flight_routes(data, year):
         year * 10000 + 12 * 100 + 31, format='%Y%m%d'))
     route_end_dates = defaultdict(lambda: pd.to_datetime(
         year * 10000 + 01 * 100 + 01, format='%Y%m%d'))
-    data['route'] = data['UniqueCarrier'] + ' ' + \
-        data['Origin'] + ' ' + data['Dest']
+    data['route'] = data['UniqueCarrier'] + \
+        ' ' + data['Origin'] + ' ' + data['Dest']
     data['date'] = pd.to_datetime(
         data.Year * 10000 + data.Month * 100 + data.DayofMonth, format='%Y%m%d')
     for num, date in enumerate(data['date']):
@@ -57,8 +58,28 @@ def create_closure_indicator(route_dates):
     return route_dates
 
 
-def create_closure_column(data, closure_dict):
+def create_closure_column(route_dates, data):
+    '''
+    INPUT: DICT: route start and end dates, PANDAS DF: data to create indicators for
+    OUTPUT: new pandas df with route closure indicators
+    '''
     closure_column = []
+
+    def create_closure_indicator(route_dates):
+        '''
+        INPUT: DICT: route start and end dates
+        OUTPUT: dictionary with closure indicators for each route
+        '''
+        threshold = pd.to_datetime('2004-12-01')
+        for route in route_dates.keys():
+            if route_dates[route][1] == route_dates[route][0]:
+                route_dates[route] = route_dates[route] + (-1,)
+            elif route_dates[route][1] < threshold:
+                route_dates[route] = route_dates[route] + (1,)
+            else:
+                route_dates[route] = route_dates[route] + (0,)
+        return route_dates
+    closure_dict = create_closure_indicator(route_dates)
     for route in data['route']:
         closure_column.append(closure_dict[route][2])
     data['Closure'] = pd.Series(closure_column)
@@ -75,6 +96,11 @@ def save_new_csv(data, filename):
 
 
 def write_file_to_bucket(bucketname, data, filepath):
+    '''
+    INPUT: STR, Pandas dataframe, String
+    Reads in a pandas dataframe to the specified S3 bucket.
+    The filepath is the name given to the file in S3
+    '''
     # Get connection to bucket
     access_key, access_secret_key = os.environ[
         'AWS_ACCESS_KEY'], os.environ['AWS_SECRET_ACCESS_KEY']
@@ -92,8 +118,7 @@ def write_file_to_bucket(bucketname, data, filepath):
 if __name__ == '__main__':
     original_df = load_data('../../../dev/2004.csv')
     routes = get_flight_routes(original_df, 2004)
-    closure_dict = create_closure_indicator(routes)
-    new_data = create_closure_column(original_df, closure_dict)
+    new_data = create_closure_column(routes, original_df)
     new_data = clean_data(new_data)
     save_new_csv(new_data, '2004_indicators.csv')
     write_file_to_bucket('flight-final-project',

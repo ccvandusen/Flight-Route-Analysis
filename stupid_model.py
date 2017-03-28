@@ -7,11 +7,12 @@ from sklearn.linear_model import LogisticRegression
 import statsmodels.api as sm
 import matplotlib.pyplot as plt
 from datetime import datetime
-import multiprocessing
+import model_data_prep as mdp
+import feature_engineer as fe
 
 
 def get_logit_results(X, y):
-    model = sm.Logit(y, X).fit()  # using statsmodels because they don't apply
+    model = sm.Logit(y, X).fit()  # using statsmodels because it doesn't apply
     # Regularization so we can get non-normalized
     # coefficient values
     return model.summary()
@@ -51,7 +52,7 @@ def plot_ROC_curve(X_train, y_train, labels):
     plt.plot(fprs, tprs)
     plt.xlabel("False Positive Rate (1 - Specificity)")
     plt.ylabel("True Positive Rate (Sensitivity, Recall)")
-    plt.title("ROC plot of fake data")
+    plt.title("ROC plot model")
     plt.show()
     return tprs, fprs, thresholds.tolist()
 
@@ -67,22 +68,13 @@ def run_random_forest(X_train, X_test, y_train, y_test, num_trees, max_features)
     y_pred = rf.predict(X_test)
     return rf.score(X_test, y_test), max_features
 
-
-def get_and_group_data(filepath):
-    data = pd.read_csv(filepath, nrows=100000)
-    groupby = data.groupby(['route']).mean()
-    groupby = groupby[np.isfinite(groupby['Closure'])]
-    groupby.dropna(inplace=True)
-    groupby = groupby[(groupby['Closure'] <= 1) & (groupby['Closure'] >= 0)]
-    y = groupby['Closure']
-    X = groupby[['ArrDelay', 'DepDelay', 'Distance',
-                 'NASDelay']]
-    return groupby, X, y
-
 if __name__ == '__main__':
     startTime = datetime.now()
-    groupby, X, y = get_and_group_data('data/2005_indicators.csv')
-    #X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.2)
-    print get_logit_results(X, y)
-    #plot_ROC_curve(X_train, y_train, y_test)
+    data = fe.load_and_clean_data('2004_indicators')
+    count, avg, total = groupby_data(data)
+    model_df = mdp.create_model_variables(count, avg, total, 2004)
+    y = model_df['04ClosureIndicator']
+    X = model_df.drop('04ClosureIndicator', axis=1)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.2)
+    plot_ROC_curve(X_train, y_train, y_test)
     print datetime.now() - startTime
