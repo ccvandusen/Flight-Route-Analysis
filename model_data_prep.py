@@ -68,16 +68,16 @@ def create_model_variables(count, avg, g_min, g_max, year):
 
 def merge_years(df1, df2):
     merge = pd.concat([df1, df2], axis=1, join='outer')
-    return merged_df
+    return merge
 
 if __name__ == '__main__':
     df1 = fe.load_and_clean_data('../../../dev/data/2004_indicators.csv')
     count, avg, g_min, g_max = groupby_data(df1)
     model_df1 = create_model_variables(count, avg, g_min, g_max, 2004)
-    model_df1 = model_df1.dropna()
+    model_df1.dropna(inplace=True)
     df1 = fe.load_and_clean_data('../../../dev/data/2005_indicators.csv')
-    count, avg, g_min, g_max = groupby_data(df2)
+    count, avg, g_min, g_max = groupby_data(df1)
     model_df2 = create_model_variables(count, avg, g_min, g_max, 2005)
-    model_df2 = model_df2.dropna()
+    model_df2.dropna(inplace=True)
     merge_df = merge_years(model_df1, model_df2)
     merge_df.to_csv('0405modeldata.csv')

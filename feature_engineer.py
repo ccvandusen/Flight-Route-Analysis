@@ -7,9 +7,11 @@ Carriers = ['AA', 'AS', 'B6', 'CO', 'DL', 'EV',
 
 def load_and_clean_data(filename, subset=None):
     data = pd.read_csv(filename, nrows=subset)
-    data[data['UniqueCarrier'].isin(Carriers)]
+    data = data[data['UniqueCarrier'].isin(Carriers)]
     data = data[data['Closure'].isin([0, 1])]
     data = data[data['Diverted'] == 0]
+    data['date'] = pd.to_datetime(data['date'])
+    data.sort_values(by=['Origin', 'UniqueCarrier', 'Dest'], inplace=True)
     route_dict = defaultdict(list)
     routes = []
     for route in data['route'].unique():
