@@ -60,9 +60,6 @@ def create_model_variables(count, avg, g_min, g_max, year):
             g_max.iloc[index_num]['date'])
         # Transforming the dictionary into a dataframe for the model, Assigning
         # column names
-    for key in variable_dict.keys():
-        if variable_dict[key][6] == 1:
-            del variable_dict[key]
     df = pd.DataFrame.from_dict(variable_dict)
     df = df.T
     df.columns = Colnames
@@ -78,7 +75,7 @@ if __name__ == '__main__':
     count, avg, g_min, g_max = groupby_data(df1)
     model_df1 = create_model_variables(count, avg, g_min, g_max, 2004)
     model_df1 = model_df1.dropna()
-    df1 = fe.load_and_clean_data('data/2005_indicators.csv')
+    df1 = fe.load_and_clean_data('../../../dev/data/2005_indicators.csv')
     count, avg, g_min, g_max = groupby_data(df2)
     model_df2 = create_model_variables(count, avg, g_min, g_max, 2005)
     model_df2 = model_df2.dropna()
