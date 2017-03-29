@@ -7,11 +7,12 @@ from collections import defaultdict
 def groupby_data(data):
     count = data.groupby('route').count()
     avg = data.groupby('route').mean()
-    total = data.groupby('route').min()
-    return count, avg, total
+    g_min = data.groupby('route').min()
+    g_max = data.groupby('route').max()
+    return count, avg, g_min, g_max
 
 
-def create_model_variables(count, avg, total, year):
+def create_model_variables(count, avg, g_min, g_max, year):
     year = year
     variable_dict = defaultdict(list)
     Colnames = ['{0}FlightTotal'.format(str(year)), '{0}ClosureIndicator'.format(str(year)), '{0}AvgDelay'.format(str(year)), '{0}CarrierDelay'.format(str(year)),
@@ -73,13 +74,13 @@ def merge_years(df1, df2):
     return merged_df
 
 if __name__ == '__main__':
-    df1 = fe.load_and_clean_data('../../../dev/data/2004.csv')
-    count, avg, total = groupby_data(df1)
-    model_df1 = create_model_variables(count, avg, total, 2004)
+    df1 = fe.load_and_clean_data('../../../dev/data/2004_indicators.csv')
+    count, avg, g_min, g_max = groupby_data(df1)
+    model_df1 = create_model_variables(count, avg, g_min, g_max, 2004)
     model_df1 = model_df1.dropna()
     df1 = fe.load_and_clean_data('data/2005_indicators.csv')
-    count, avg, total = groupby_data(df2)
-    model_df2 = create_model_variables(count, avg, total, 2005)
+    count, avg, g_min, g_max = groupby_data(df2)
+    model_df2 = create_model_variables(count, avg, g_min, g_max, 2005)
     model_df2 = model_df2.dropna()
     merge_df = merge_years(model_df1, model_df2)
     merge_df.to_csv('0405modeldata.csv')
