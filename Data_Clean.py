@@ -46,31 +46,19 @@ def clean_data(data):
     return data
 
 
-def create_closure_indicator(route_dates):
-    threshold = pd.to_datetime('2004-12-01')
-    for route in route_dates.keys():
-        if route_dates[route][1] == route_dates[route][0]:
-            route_dates[route] = route_dates[route] + (-1,)
-        elif route_dates[route][1] < threshold:
-            route_dates[route] = route_dates[route] + (1,)
-        else:
-            route_dates[route] = route_dates[route] + (0,)
-    return route_dates
-
-
-def create_closure_column(route_dates, data):
+def create_closure_column(route_dates, data, year):
     '''
     INPUT: DICT: route start and end dates, PANDAS DF: data to create indicators for
     OUTPUT: new pandas df with route closure indicators
     '''
     closure_column = []
 
-    def create_closure_indicator(route_dates):
+    def create_closure_indicator(route_dates, year):
         '''
         INPUT: DICT: route start and end dates
         OUTPUT: dictionary with closure indicators for each route
         '''
-        threshold = pd.to_datetime('2004-12-01')
+        threshold = pd.to_datetime('{}-12-01'.format(str(year)))
         for route in route_dates.keys():
             if route_dates[route][1] == route_dates[route][0]:
                 route_dates[route] = route_dates[route] + (-1,)
@@ -79,7 +67,7 @@ def create_closure_column(route_dates, data):
             else:
                 route_dates[route] = route_dates[route] + (0,)
         return route_dates
-    closure_dict = create_closure_indicator(route_dates)
+    closure_dict = create_closure_indicator(route_dates, year)
     for route in data['route']:
         closure_column.append(closure_dict[route][2])
     data['Closure'] = pd.Series(closure_column)
@@ -118,7 +106,7 @@ def write_file_to_bucket(bucketname, data, filepath):
 if __name__ == '__main__':
     original_df = load_data('../../../dev/2004.csv')
     routes = get_flight_routes(original_df, 2004)
-    new_data = create_closure_column(routes, original_df)
+    new_data = create_closure_column(routes, original_df, 2004)
     new_data = clean_data(new_data)
     save_new_csv(new_data, '2004_indicators.csv')
     write_file_to_bucket('flight-final-project',

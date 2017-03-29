@@ -18,7 +18,7 @@ def get_logit_results(X, y):
     return model.summary()
 
 
-def plot_ROC_curve(X_train, y_train, labels):
+def plot_ROC_curve(X_train, y_train, X_test, labels):
     model = LogisticRegression()  # Using sklearn here because it has way more
     # built in functionality to get better predictions
     # compared to statsmodels
@@ -69,12 +69,10 @@ def run_random_forest(X_train, X_test, y_train, y_test, num_trees, max_features)
     return rf.score(X_test, y_test), max_features
 
 if __name__ == '__main__':
-    startTime = datetime.now()
-    data = fe.load_and_clean_data('2004_indicators')
-    count, avg, total = groupby_data(data)
-    model_df = mdp.create_model_variables(count, avg, total, 2004)
-    y = model_df['04ClosureIndicator']
-    X = model_df.drop('04ClosureIndicator', axis=1)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.2)
-    plot_ROC_curve(X_train, y_train, y_test)
-    print datetime.now() - startTime
+    #startTime = datetime.now()
+    # print model_df.head(1), model_df.columns
+    # y = model_df['4ClosureIndicator']
+    # X = model_df.drop(['4ClosureIndicator', '4FlightTotal'], axis=1)
+    # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.2)
+    # plot_ROC_curve(X_train, y_train, X_test, y_test)
+    # print datetime.now() - startTime

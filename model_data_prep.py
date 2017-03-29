@@ -1,65 +1,85 @@
 import pandas as pd
 import numpy as np
 import feature_engineer as fe
+from collections import defaultdict
 
 
 def groupby_data(data):
-    count_groupby = data.groupby('route').count()
-    avg_groupby = data.groupby('route').mean()
-    min_groupby = data.groupby('route').min()
-    return count_groupby, avg_groupby, min_groupby
+    count = data.groupby('route').count()
+    avg = data.groupby('route').mean()
+    total = data.groupby('route').min()
+    return count, avg, total
 
 
-def create_model_variables(count, avg, min, year):
+def create_model_variables(count, avg, total, year):
+    year = year
     variable_dict = defaultdict(list)
-    # This key will be used to assign colnames
-    variable_dict['Colnames'].extend(('{0}FlightTotal'.format(year), '{0}ClosureIndicator'.format(year), '{0}AvgDelay'.format(year), '{0}CarrierDelay'.format(year),
-                                      '{0}WeatherDelay'.format(year), '{0}NASDelay'.format(
-                                          year), '{0}CancelledAvg'.format(year),
-                                      '{0}LateAircraftAvg'.format(year), '{0}Distance'.format(year)))
-    # Getting variables by counting # of instances of given column
-    for index_num in range(len(count_groupby)):
+    Colnames = ['{0}FlightTotal'.format(str(year)), '{0}ClosureIndicator'.format(str(year)), '{0}AvgDelay'.format(str(year)), '{0}CarrierDelay'.format(str(year)),
+                '{0}WeatherDelay'.format(str(year)), '{0}NASDelay'.format(
+                    str(year)), '{0}CancelledAvg'.format(str(year)),
+                '{0}LateAircraftAvg'.format(str(year)), '{0}Distance'.format(str(year)), '{0}FirstDate'.format(str(year)), '{0}LastDate'.format(str(year))]
+
+    for index_num in range(len(count)):
         # Flight totals
-        variable_dict[count_groupby.index[index_num]].append(
-            ('{0}FlightTotal'.format(year), count_groupby.iloc[index_num]['CRSDepTime']))
+        variable_dict[count.index[index_num]].append(
+            count.iloc[index_num]['CRSDepTime'])
     # Getting variables by averaging over all flights for a given route
-    for index_num in range(len(avg_groupby)):
+    for index_num in range(len(avg)):
         # Closures
-        variable_dict[avg_groupby.index[index_num]].append(
-            ('{0}ClosureIndicator'.format(year), avg_groupby.iloc[index_num]['Closure']))
+        variable_dict[avg.index[index_num]].append(
+            avg.iloc[index_num]['Closure'])
         # Avg Delays
-        variable_dict[avg_groupby.index[index_num]].append(('{0}AvgDelay'.format(year), (avg_groupby.iloc[index_num]['ArrDelay']
-                                                                                         + avg_groupby.iloc[index_num]['DepDelay']) / 2.))
+        variable_dict[avg.index[index_num]].append((avg.iloc[index_num]['ArrDelay']
+                                                    + avg.iloc[index_num]['DepDelay']) / 2.)
         # Carrier Delay Average
-        variable_dict[avg_groupby.index[index_num]].append(
-            ('{0}CarrierDelay'.format(year), avg_groupby.iloc[index_num]['CarrierDelay']))
+        variable_dict[avg.index[index_num]].append(
+            avg.iloc[index_num]['CarrierDelay'])
         # Weather Delay Average
-        variable_dict[avg_groupby.index[index_num]].append(
-            ('{0}WeatherDelay'.format(year), avg_groupby.iloc[index_num]['WeatherDelay']))
+        variable_dict[avg.index[index_num]].append(
+            avg.iloc[index_num]['WeatherDelay'])
         # NAS delay Average
-        variable_dict[avg_groupby.index[index_num]].append(
-            ('{0}NASDelay'.format(year), avg_groupby.iloc[index_num]['NASDelay']))
+        variable_dict[avg.index[index_num]].append(
+            avg.iloc[index_num]['NASDelay'])
         # Average # of cancelled flights
-        variable_dict[avg_groupby.index[index_num]].append(
-            ('{0}CancelledAvg'.format(year), avg_groupby.iloc[index_num]['Cancelled']))
+        variable_dict[avg.index[index_num]].append(
+            avg.iloc[index_num]['Cancelled'])
         # Late Aircraft delay Average
-        variable_dict[avg_groupby.index[index_num]].append(('{0}LateAircraftAvg'.format(
-            year), avg_groupby.iloc[index_num]['LateAircraftDelay']))
-    #
-    for index_num in range(len(min_groupby)):
+        variable_dict[avg.index[index_num]].append(
+            avg.iloc[index_num]['LateAircraftDelay'])
         # Route Distance
-        variable_dict[min_groupby.index[index_num]].append(
-            ('{0}Distance'.format(year), min_groupby.iloc[index_num]['Distance']))
-    # Transforming the dictionary into a dataframe for the model, Assigning
-    # column names
+        variable_dict[avg.index[index_num]].append(
+            avg.iloc[index_num]['Distance'])
+    for index_num in range(len(g_min)):
+        # First flight of year
+        variable_dict[g_min.index[index_num]].append(
+            g_min.iloc[index_num]['date'])
+    for index_num in range(len(g_max)):
+        # Last flight of year
+        variable_dict[g_max.index[index_num]].append(
+            g_max.iloc[index_num]['date'])
+        # Transforming the dictionary into a dataframe for the model, Assigning
+        # column names
+    for key in variable_dict.keys():
+        if variable_dict[key][6] == 1:
+            del variable_dict[key]
     df = pd.DataFrame.from_dict(variable_dict)
     df = df.T
-    df.columns = df.loc['Colnames']
+    df.columns = Colnames
     return df
 
 
-def create_df_from_dict(variable_dict):
-
+def merge_years(df1, df2):
+    merge = pd.concat([df1, df2], axis=1, join='outer')
+    return merged_df
 
 if __name__ == '__main__':
-    df = fe.load_and_clean_data('../../../dev/data/2004_indicators.csv')
+    df1 = fe.load_and_clean_data('../../../dev/data/2004.csv')
+    count, avg, total = groupby_data(df1)
+    model_df1 = create_model_variables(count, avg, total, 2004)
+    model_df1 = model_df1.dropna()
+    df1 = fe.load_and_clean_data('data/2005_indicators.csv')
+    count, avg, total = groupby_data(df2)
+    model_df2 = create_model_variables(count, avg, total, 2005)
+    model_df2 = model_df2.dropna()
+    merge_df = merge_years(model_df1, model_df2)
+    merge_df.to_csv('0405modeldata.csv')
