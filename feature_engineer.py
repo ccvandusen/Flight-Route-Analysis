@@ -5,7 +5,7 @@ Carriers = ['AA', 'AS', 'B6', 'CO', 'DL', 'EV',
             'F9', 'HA', 'HP', 'NK', 'OO', 'UA', 'VX', 'WN', 'US']
 
 
-def load_and_clean_data(filename, subset=None):
+def load_and_clean_ontime_data(filename, subset=None):
     data = pd.read_csv(filename, nrows=subset)
     data = data[data['UniqueCarrier'].isin(Carriers)]
     data = data[data['Closure'].isin([0, 1])]

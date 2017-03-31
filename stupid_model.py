@@ -4,6 +4,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.datasets import make_classification
 from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import cross_val_score
 import statsmodels.api as sm
 import matplotlib.pyplot as plt
 from datetime import datetime
@@ -57,18 +58,20 @@ def plot_ROC_curve(X_train, y_train, X_test, labels):
     return tprs, fprs, thresholds.tolist()
 
 
-def run_random_forest(X_train, X_test, y_train, y_test, num_trees, max_features):
+def random_forest_cross_val(X, y, num_trees=20, max_features=3, folds=5, n_jobs=-1):
     '''
-    INPUT: X_train,X_test,y_train,y_test
-    OUTPUT: score, number of trees
+    INPUT: X,y
+    OUTPUT: score
+    This ALWAYS
     '''
     rf = RandomForestClassifier(
-        n_estimators=num_trees, max_features=max_features, n_jobs=-1)
-    rf.fit(X_train, y_train)
-    y_pred = rf.predict(X_test)
-    return rf.score(X_test, y_test), max_features
+        n_estimators=num_trees, max_features=max_features, n_jobs=n_jobs)
+    print 'accuracy_scores : {}'.format(cross_val_score(rf, X, y, cv=folds, n_jobs=n_jobs))
+    print 'precision_scores : {}'.format(cross_val_score(rf, X, y, cv=folds, n_jobs=n_jobs, scoring='precision'))
+    print 'recall_scores : {}'.format(cross_val_score(rf, X, y, cv=folds, n_jobs=n_jobs, scoring='recall'))
 
-if __name__ == '__main__':
+
+# if __name__ == '__main__':
     #startTime = datetime.now()
     # print model_df.head(1), model_df.columns
     # y = model_df['4ClosureIndicator']

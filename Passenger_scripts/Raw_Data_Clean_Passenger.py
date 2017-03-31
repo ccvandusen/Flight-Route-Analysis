@@ -10,33 +10,24 @@ Carriers = ['AA', 'AS', 'B6', 'CO', 'DL', 'EV',
             'F9', 'HA', 'HP', 'NK', 'OO', 'UA', 'VX', 'WN', 'US']
 
 
-def load_data(filepath, subset=None):
-    data = pd.read_csv(filepath, nrows=subset)
-    #data = data[data['UniqueCarrier'].isin(Carriers)]
-    return data
-
-
-def get_flight_routes(data, year):
-    route_start_dates = defaultdict(lambda: pd.to_datetime(
-        year * 10000 + 12 * 100 + 31, format='%Y%m%d'))
-    route_end_dates = defaultdict(lambda: pd.to_datetime(
-        year * 10000 + 01 * 100 + 01, format='%Y%m%d'))
-    data['route'] = data['UniqueCarrier'] + \
-        ' ' + data['Origin'] + ' ' + data['Dest']
+def load_and_clean_passenger_data(filename, subset=None):
+    Classes = ['A', 'C', 'E', 'F']
+    data = pd.read_csv(filename, nrows=subset)
+    data = data[data['UNIQUE_CARRIER'].isin(Carriers)]
+    data = data[data['CLASS'].isin(Classes)]
+    data['route'] = data['UNIQUE_CARRIER'] + \
+        ' ' + data['ORIGIN'] + ' ' + data['DEST']
+    data.sort_values(by=['ORIGIN', 'UNIQUE_CARRIER', 'DEST'], inplace=True)
+    route_dict = defaultdict(list)
+    routes = []
+    for route in data['route'].unique():
+        route_dict[''.join(sorted(route))].append(route)
+    for route in data['route']:
+        routes.append(route_dict[''.join(sorted(route))][0])
+    data['route'] = routes
     data['date'] = pd.to_datetime(
-        data.Year * 10000 + data.Month * 100 + data.DayofMonth, format='%Y%m%d')
-    for num, date in enumerate(data['date']):
-        # import ipdb
-        # ipdb.set_trace()
-        if route_start_dates[data['route'][num]] >= date:
-            route_start_dates[data['route'][num]] = date
-        if route_end_dates[data['route'][num]] < date:
-            route_end_dates[data['route'][num]] = date
-    for route in route_start_dates.keys():
-        if route in route_end_dates.keys():
-            route_start_dates[route] = (route_start_dates[
-                route], route_end_dates[route])
-    return route_start_dates
+        data.YEAR * 10000 + data.MONTH * 100 + 1, format='%Y%m%d')
+    return data
 
 
 def clean_data(data):
