@@ -96,7 +96,7 @@ def create_ontime_model_variables(count, avg, g_min, g_max, year):
 
 def create_passenger_model_variables(data, ontime_routes, year):
     data = data[data('route').isin(ontime_routes)]
-    passenger_data = data.groupby['route'].sum()
+    passenger_data = data.groupby('route').sum()
 
     passenger_variables = defaultdict(list)
     for index_num in range(len(passenger_data)):
@@ -327,4 +327,4 @@ def create_model_prepped_data(ontime_filepath_list, passenger_filepath_list, yea
 
 if __name__ == '__main__':
     DATA = create_model_prepped_data(['../../../dev/data/2004_indicators.csv',
-                                      '../../../dev/data/2005_indicators.csv'], ['data/2004_passengers.csv', 'data/2005_passengers.csv'])
+                                      '../../../dev/data/2005_indicators.csv'], ['data/2004_passengers.csv', 'data/2005_passengers.csv'], range(2004, 2006))
