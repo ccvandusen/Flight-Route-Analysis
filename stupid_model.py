@@ -58,7 +58,7 @@ def plot_ROC_curve(X_train, y_train, X_test, labels):
     return tprs, fprs, thresholds.tolist()
 
 
-def random_forest_cross_val(X, y, num_trees=20, max_features=3, folds=5, n_jobs=-1):
+def random_forest_cross_val(X, y, num_trees=50, max_features=3, folds=10, n_jobs=-1):
     '''
     INPUT: X,y
     OUTPUT: score
@@ -66,9 +66,14 @@ def random_forest_cross_val(X, y, num_trees=20, max_features=3, folds=5, n_jobs=
     '''
     rf = RandomForestClassifier(
         n_estimators=num_trees, max_features=max_features, n_jobs=n_jobs)
-    print 'accuracy_scores : {}'.format(cross_val_score(rf, X, y, cv=folds, n_jobs=n_jobs))
-    print 'precision_scores : {}'.format(cross_val_score(rf, X, y, cv=folds, n_jobs=n_jobs, scoring='precision'))
-    print 'recall_scores : {}'.format(cross_val_score(rf, X, y, cv=folds, n_jobs=n_jobs, scoring='recall'))
+    accuracy = cross_val_score(rf, X, y, cv=folds, n_jobs=n_jobs)
+    precision = cross_val_score(
+        rf, X, y, cv=folds, n_jobs=n_jobs, scoring='precision')
+    recall = cross_val_score(
+        rf, X, y, cv=folds, n_jobs=n_jobs, scoring='recall')
+    print 'accuracy_scores : {}'.format(sum(accuracy) / len(accuracy))
+    print 'precision_scores : {}'.format(sum(precision) / len(precision))
+    print 'recall_scores : {}'.format(sum(recall) / len(recall))
 
 
 # if __name__ == '__main__':

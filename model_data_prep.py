@@ -12,9 +12,24 @@ def groupby_data(data):
     return count, avg, g_min, g_max
 
 
-def create_model_variables(count, avg, g_min, g_max, year):
-    year = year
+def create_ontime_model_variables(count, avg, g_min, g_max, year):
+    '''
+    INPUT: PANDAS DF: count, min, max, and average groupbys from the
+                      cleaned up on time yearly data from Raw_Data_Clean fxn
+           INT: year of the data to be aggregated
+    OUTPUT: dataframe to be read in to the model. Still needs to be quality checked
+            by the fix_conflicts function
+
+    This function takes the groupby data and creates a dictionary with keys for each
+    route and values of the various aggregated data:
+    Flight total,
+    '''
+
+    # Initializing the dictionary that stores all the values for the new df
+    # per route.
     variable_dict = defaultdict(list)
+
+    # These are the column names of the returned dataframe from this function
     Colnames = ['{0}FlightTotal'.format(str(year)), '{0}ClosureIndicator'.format(str(year)),
                 '{0}AvgDelay'.format(
                     str(year)), '{0}CarrierDelay'.format(str(year)),
@@ -24,6 +39,10 @@ def create_model_variables(count, avg, g_min, g_max, year):
                     str(year)), '{0}Distance'.format(str(year)),
                 '{0}FirstDate'.format(str(year)), '{0}LastDate'.format(str(year))]
 
+    '''
+    Adding all the variables from the various groupbys into
+    the dictionary
+    '''
     for index_num in range(len(count)):
         # Flight totals
         variable_dict[count.index[index_num]].append(
@@ -68,12 +87,33 @@ def create_model_variables(count, avg, g_min, g_max, year):
     df = pd.DataFrame.from_dict(variable_dict)
     df = df.T
     df.columns = Colnames
-    df.dropna(inplace=True)  # Lost 3 routes in this step
+    # Lost 3 routes in 2004 this step, is ok (from some 2200)
+    df.dropna(inplace=True)
+
     return df
 
 
-def merge_years(df1, df2):
-    merge = pd.concat([df1, df2], axis=1, join='outer')
+def create_passenger_model_variables(data, ontime_routes, year):
+    data = data[data['route'].isin(ontime_routes)]
+    passenger_data = data.groupby['route'].sum()
+
+    passenger_variables = defaultdict(list)
+    for index_num in range(len(passenger_data)):
+        passenger_variables[passenger_data.index[index_num]].extend\
+            ((passenger_data.iloc[index_num][0],
+              passenger_data.iloc[index_num][1]))
+
+    df = pd.DataFrame.from_dict(passenger_variables)
+    df = df.T
+    df.columns = ['{}Seats'.format(year), '{}Passengers'.format(year)]
+    df['{}fill_pct'.format(year)] = df['{}Passengers'.format(
+        year)] / df['{}Seats'.format(year)]
+
+    return df
+
+
+def merge(merge_list):
+    merge = pd.concat(df_list, axis=1, join='outer')
     return merge
 
 
@@ -214,7 +254,7 @@ def year_slice(data, year_list):
                 break
 
     for column_list in final_list:
-        #import ipdb
+        # import ipdb
         # ipdb.set_trace()
         mini_df = data.loc[column_list[0]][column_list]
         mini_df = mini_df.to_frame()
@@ -228,12 +268,54 @@ def year_slice(data, year_list):
 
     return sliced_data
 
+
+def create_model_prepped_data(ontime_df_list, passenger_df_list, year_list):
+    '''
+    Read in the data created from the Raw_Data fxns and it will spit out data ready to be
+    modelled.
+    '''
+    merge_list = []
+    if len(ontime_df_list) == 1:
+        count, avg, g_min, g_max = groupby_data(ontime_df_list[0])
+
+        ontime_stage_1 = create_ontime_model_variables(
+            count, avg, g_min, g_max, year_list[0])
+
+        ontime_routes = ontime_stage_1.index
+
+        passenger_stage_1 = create_passenger_model_variables(
+            passenger_df_list[0], ontime_routes, year_list[0])
+
+        total_variable_list = merge([passenger_stage_1, ontime_stage_1])
+
+        return total_variable_list
+
+    elif len(ontime_df_list) > 1:
+
+        for index in xrange(len(ontime_df_list)):
+            count, avg, g_min, g_max = groupby_data(ontime_df_list[0])
+
+            ontime_stage_1 = create_ontime_model_variables(
+                count, avg, g_min, g_max, year_list[index])
+
+            ontime_routes = ontime_stage_1.index
+
+            passenger_stage_1 = (create_passenger_model_variables(
+                passenger_df_list[index], ontime_routes, year_list[index]))
+
+            total_variable_list = merge([passenger_stage_1, ontime_stage_1])
+
+            merge_list.append(total_variable_list)
+
+        merged_df = merge_years(merge_list)
+
+        prepped_data = fix_conflicts(merge_df, year_list)
+
+        return prepped_data
+
+    else:
+        print 'U WOT MATE'
+        return None
+
 if __name__ == '__main__':
-    df1 = fe.load_and_clean_data('../../../dev/data/2004_indicators.csv')
-    count, avg, g_min, g_max = groupby_data(df1)
-    model_df1 = create_model_variables(count, avg, g_min, g_max, 2004)
-    df1 = fe.load_and_clean_data('../../../dev/data/2005_indicators.csv')
-    count, avg, g_min, g_max = groupby_data(df1)
-    model_df2 = create_model_variables(count, avg, g_min, g_max, 2005)
-    merge_df = merge_years(model_df1, model_df2)
-    merge_df.to_csv('0405modeldata.csv')
+    print 'nothing in main clause lol'

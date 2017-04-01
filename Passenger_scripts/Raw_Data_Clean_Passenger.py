@@ -6,6 +6,12 @@ import boto
 import os
 import StringIO
 
+'''
+This script takes a csv of one year (or less) from the
+BTS market segment data and returns a pandas dataframe ready to be
+merged with the ontime data and used in the model
+'''
+
 Carriers = ['AA', 'AS', 'B6', 'CO', 'DL', 'EV',
             'F9', 'HA', 'HP', 'NK', 'OO', 'UA', 'VX', 'WN', 'US']
 
@@ -27,46 +33,7 @@ def load_and_clean_passenger_data(filename, subset=None):
     data['route'] = routes
     data['date'] = pd.to_datetime(
         data.YEAR * 10000 + data.MONTH * 100 + 1, format='%Y%m%d')
-    return data
-
-
-def clean_data(data):
-    data = data.drop(['TailNum', 'Year', 'Month', 'DayOfWeek',
-                      'DayofMonth', 'CancellationCode'], axis=1)
-    data['date'] = pd.to_datetime(data['date'])
-    return data
-
-
-def create_closure_column(route_dates, data, year):
-    '''
-    INPUT: DICT: route start and end dates, PANDAS DF: data to create indicators for
-    OUTPUT: new pandas df with route closure indicators
-    '''
-    closure_column = []
-
-    def create_closure_indicator(route_dates, year):
-        '''
-        INPUT: DICT: route start and end dates
-        OUTPUT: dictionary with closure indicators for each route
-        '''
-        threshold = pd.to_datetime('{}-12-01'.format(str(year)))
-        for route in route_dates.keys():
-            if route_dates[route][1] == route_dates[route][0]:
-                route_dates[route] = route_dates[route] + (-1,)
-            elif route_dates[route][1] < threshold:
-                route_dates[route] = route_dates[route] + (1,)
-            else:
-                route_dates[route] = route_dates[route] + (0,)
-        return route_dates
-    closure_dict = create_closure_indicator(route_dates, year)
-    for route in data['route']:
-        closure_column.append(closure_dict[route][2])
-    data['Closure'] = pd.Series(closure_column)
-    for index_num, indicator in enumerate(data['Closure']):
-        index_list = []
-        if indicator == -1:
-            index_list.append(index_num)
-    data.drop(data.index[index_list], inplace=True)
+    data['avg_fill'] = data['PASSENGERS'] / data['SEATS']
     return data
 
 
