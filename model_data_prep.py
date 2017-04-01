@@ -319,6 +319,17 @@ def create_model_prepped_data(ontime_filepath_list, passenger_filepath_list, yea
 
         prepped_data = fix_conflicts(merged_df, year_list)
 
+        Carrier = []
+        Origin = []
+        Dest = []
+        for split_route in prepped_data.index.str.split(' '):
+            Carrier.append(split_route[0])
+            Origin.append(split_route[1])
+            Dest.append(split_route[2])
+        prepped_data['UniqueCarrier'] = Carrier
+        prepped_data['Origin'] = Origin
+        prepped_data['Dest'] = Dest
+
         return prepped_data
 
     else:
