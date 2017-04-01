@@ -326,4 +326,5 @@ def create_model_prepped_data(ontime_filepath_list, passenger_filepath_list, yea
         return None
 
 if __name__ == '__main__':
-    DATA = create_model_prepped_data([])
+    DATA = create_model_prepped_data(['../../../dev/data/2004_indicators.csv',
+                                      '../../../dev/data/2005_indicators.csv'], ['2004_passengers.csv', '2005_passengers.csv'])
