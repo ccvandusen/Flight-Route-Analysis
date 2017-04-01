@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import feature_engineer as fe
 from collections import defaultdict
+import Raw_Data_Clean_Passenger as dcp
 
 
 def groupby_data(data):
@@ -269,11 +270,18 @@ def year_slice(data, year_list):
     return sliced_data
 
 
-def create_model_prepped_data(ontime_df_list, passenger_df_list, year_list):
+def create_model_prepped_data(ontime_filepath_list, passenger_filepath_list, year_list):
     '''
     Read in the data created from the Raw_Data fxns and it will spit out data ready to be
     modelled.
     '''
+    ontime_df_list = []
+    for filename in ontime_filepath_list:
+        ontime_df_list.append(pd.read_csv(filename))
+    passenger_df_list = []
+    for filename in passenger_filepath_list:
+        passenger_df_list.append(dcp.load_and_clean_passenger_data(filename))
+
     merge_list = []
     if len(ontime_df_list) == 1:
         count, avg, g_min, g_max = groupby_data(ontime_df_list[0])
@@ -318,4 +326,4 @@ def create_model_prepped_data(ontime_df_list, passenger_df_list, year_list):
         return None
 
 if __name__ == '__main__':
-    print 'nothing in main clause lol'
+    DATA = create_model_prepped_data([])
