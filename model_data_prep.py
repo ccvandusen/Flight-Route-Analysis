@@ -95,7 +95,7 @@ def create_ontime_model_variables(count, avg, g_min, g_max, year):
 
 
 def create_passenger_model_variables(data, ontime_routes, year):
-    data = data[data('route').isin(ontime_routes)]
+    data = data[data['route'].isin(ontime_routes)]
     passenger_data = data.groupby('route').sum()
 
     passenger_variables = defaultdict(list)
@@ -114,7 +114,7 @@ def create_passenger_model_variables(data, ontime_routes, year):
 
 
 def merge(merge_list):
-    merge = pd.concat(df_list, axis=1, join='outer')
+    merge = pd.concat(merge_list, axis=1, join='outer')
     return merge
 
 
@@ -225,7 +225,7 @@ def fix_conflicts(model_data, year_list):
                 model_data.set_value(
                     route, '{}ClosureIndicator'.format(str(year)), 1)
 
-    model_data.set_index('Unnamed: 0', inplace=True)
+    #model_data.set_index('Unnamed: 0', inplace=True)
     return model_data
 
 
@@ -277,7 +277,7 @@ def create_model_prepped_data(ontime_filepath_list, passenger_filepath_list, yea
     '''
     ontime_df_list = []
     for filename in ontime_filepath_list:
-        ontime_df_list.append(pd.read_csv(filename))
+        ontime_df_list.append(fe.load_and_clean_ontime_data(filename))
     passenger_df_list = []
     for filename in passenger_filepath_list:
         passenger_df_list.append(dcp.load_and_clean_passenger_data(filename))
@@ -315,9 +315,9 @@ def create_model_prepped_data(ontime_filepath_list, passenger_filepath_list, yea
 
             merge_list.append(total_variable_list)
 
-        merged_df = merge_years(merge_list)
+        merged_df = merge(merge_list)
 
-        prepped_data = fix_conflicts(merge_df, year_list)
+        prepped_data = fix_conflicts(merged_df, year_list)
 
         return prepped_data
 
@@ -327,4 +327,4 @@ def create_model_prepped_data(ontime_filepath_list, passenger_filepath_list, yea
 
 if __name__ == '__main__':
     DATA = create_model_prepped_data(['../../../dev/data/2004_indicators.csv',
-                                      '../../../dev/data/2005_indicators.csv'], ['data/2004_passengers.csv', 'data/2005_passengers.csv'], range(2004, 2006))
+                                      '../../../dev/data/2005_indicators.csv'], ['data/2004passengers.csv', 'data/2005passengers.csv'], range(2004, 2006))
