@@ -95,7 +95,7 @@ def create_ontime_model_variables(count, avg, g_min, g_max, year):
 
 
 def create_passenger_model_variables(data, ontime_routes, year):
-    data = data[data['route'].isin(ontime_routes)]
+    data = data[data('route').isin(ontime_routes)]
     passenger_data = data.groupby['route'].sum()
 
     passenger_variables = defaultdict(list)
@@ -300,7 +300,7 @@ def create_model_prepped_data(ontime_filepath_list, passenger_filepath_list, yea
 
     elif len(ontime_df_list) > 1:
 
-        for index in xrange(len(ontime_df_list)):
+        for index in range(len(ontime_df_list)):
             count, avg, g_min, g_max = groupby_data(ontime_df_list[0])
 
             ontime_stage_1 = create_ontime_model_variables(
@@ -322,9 +322,9 @@ def create_model_prepped_data(ontime_filepath_list, passenger_filepath_list, yea
         return prepped_data
 
     else:
-        print 'U WOT MATE'
+        # print 'U WOT MATE'
         return None
 
 if __name__ == '__main__':
     DATA = create_model_prepped_data(['../../../dev/data/2004_indicators.csv',
-                                      '../../../dev/data/2005_indicators.csv'], ['2004_passengers.csv', '2005_passengers.csv'])
+                                      '../../../dev/data/2005_indicators.csv'], ['data/2004_passengers.csv', 'data/2005_passengers.csv'])
