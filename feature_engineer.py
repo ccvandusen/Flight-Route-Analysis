@@ -29,6 +29,32 @@ def get_carrier_dummies(data):
     return dummies_df
 
 
+def hub_or_point_indicator(data):
+    hub_system = []
+    point_system = []
+    for Carrier in data['UniqueCarrier']:
+        if Carrier in ['WN', 'NK']:
+            hub_system.append(0)
+            point_system.append(1)
+        else:
+            hub_system.append(1)
+            point_system.append(0)
+    data['hub_system'] = hub_system
+    data['point_system'] = point_system
+    return data
+
+
+def regional_indicator(data):
+    regional = []
+    for Carrier in data['UniqueCarrier']:
+        if Carrier in ['EV', 'OO']:
+            regional.append(1)
+        else:
+            regional.append(0)
+    data['regional'] = regional
+    return data
+
+
 def get_gps(data, gps_csv):
     lat_lon = pd.read_csv(gps_csv)
     origin_gps = []
@@ -43,7 +69,6 @@ def get_gps(data, gps_csv):
                 dest_gps.append((0, 0))
             else:
                 dest_gps.append(airport_lon_lat[code])
-    origin_gps, dest_gps = make_airport_keys(gps_csv)
     data['Origin_gps'] = pd.Series(origin_gps)
     data['Dest_gps'] = pd.Series(dest_gps)
     return data

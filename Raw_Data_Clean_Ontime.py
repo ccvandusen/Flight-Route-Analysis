@@ -161,7 +161,7 @@ def write_file_to_bucket(bucketname, data, filepath):
     file_object.set_contents_from_string(csv_buffer.getvalue())
 
 
-def clean_raw_data(filepath, year, drop_list, subset=None):
+def clean_raw_data(filepath, filename, year, drop_list, subset=None):
     '''
     INPUT: STR: directory filepath
            INT: the year of the data
@@ -174,14 +174,19 @@ def clean_raw_data(filepath, year, drop_list, subset=None):
     routes = get_flight_routes(original_df, year)
     labeled_data = create_closure_column(routes, original_df, year)
     cleaned_labeled_data = clean_data(labeled_data)
+    save_new_csv(cleaned_labeled_data, filename)
+    write_file_to_bucket('flight-final-project',
+                         cleaned_labeled_data, filename)
 
     return cleaned_labled_data
 
 
+def create_indicators(filepath, filename, drop_list=drop_list, year):
+    df = clean_raw_data(filepath, year, drop_list)
+    save_new_csv(df, filename)
+    write_file_to_bucket('flight-final-project', df, filename)
+
+
 if __name__ == '__main__':
-    drop_list = ['TailNum', 'Year', 'Month', 'DayOfWeek',
-                 'DayofMonth', 'CancellationCode']
-    new_data = clean_raw_data('data/2006.csv', 2006, drop_list)
-    save_new_csv(new_data, '2004_indicators.csv')
-    write_file_to_bucket('flight-final-project',
-                         new_data, '2004_indicators.csv')
+    drop_list = ['YEAR', 'MONTH', 'DAY_OF_MONTH', 'CancellationCode']
+    clean_raw_data('2009.csv', '2009_indicators.csv', 2009, drop_list)
