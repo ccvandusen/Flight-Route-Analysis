@@ -31,7 +31,9 @@ def create_ontime_model_variables(count, avg, g_min, g_max, year):
     variable_dict = defaultdict(list)
 
     # These are the column names of the returned dataframe from this function
-    Colnames = ['{0}FlightTotal'.format(str(year)), '{0}ClosureIndicator'.format(str(year)),
+    Colnames = ['{0}FlightTotal'.format(str(year)), '{0}CRSElapsedTime'.format(str(year)),
+                '{0}ActualElapsedTime'.format(
+                    str(year)), '{0}ClosureIndicator'.format(str(year)),
                 '{0}AvgDelay'.format(
                     str(year)), '{0}CarrierDelay'.format(str(year)),
                 '{0}WeatherDelay'.format(str(year)), '{0}NASDelay'.format(
@@ -44,50 +46,64 @@ def create_ontime_model_variables(count, avg, g_min, g_max, year):
     Adding all the variables from the various groupbys into
     the dictionary
     '''
-    for index_num in range(len(count)):
-        # Flight totals
-        variable_dict[count.index[index_num]].append(
-            count.iloc[index_num]['CRSDepTime'])
-    # Getting variables by averaging over all flights for a given route
-    for index_num in range(len(avg)):
-        # Closures
-        variable_dict[avg.index[index_num]].append(
-            avg.iloc[index_num]['Closure'])
-        # Avg Delays
-        variable_dict[avg.index[index_num]].append((avg.iloc[index_num]['ArrDelay']
-                                                    + avg.iloc[index_num]['DepDelay']) / 2.)
-        # Carrier Delay Average
-        variable_dict[avg.index[index_num]].append(
-            avg.iloc[index_num]['CarrierDelay'])
-        # Weather Delay Average
-        variable_dict[avg.index[index_num]].append(
-            avg.iloc[index_num]['WeatherDelay'])
-        # NAS delay Average
-        variable_dict[avg.index[index_num]].append(
-            avg.iloc[index_num]['NASDelay'])
-        # Average # of cancelled flights
-        variable_dict[avg.index[index_num]].append(
-            avg.iloc[index_num]['Cancelled'])
-        # Late Aircraft delay Average
-        variable_dict[avg.index[index_num]].append(
-            avg.iloc[index_num]['LateAircraftDelay'])
-        # Route Distance
-        variable_dict[avg.index[index_num]].append(
-            avg.iloc[index_num]['Distance'])
-    for index_num in range(len(g_min)):
-        # First flight of year
-        variable_dict[g_min.index[index_num]].append(
-            g_min.iloc[index_num]['date'])
-    for index_num in range(len(g_max)):
-        # Last flight of year
-        variable_dict[g_max.index[index_num]].append(
-            g_max.iloc[index_num]['date'])
+    # the data I have from past 2008 has different column names
+    if year > 2008:
+        for index_num in range(len(count)):
+            # Flight totals
+            variable_dict[count.index[index_num]].append(
+                count.iloc[index_num]['CRS_DEP_TIME'])
+        for index_num in range(len(avg)):
+            variable_dict[avg.index[index_num]].extend(
+                [avg.iloc[index_num]['CRS_ELAPSED_TIME'],
+                 avg.iloc[index_num]['ACTUAL_ELAPSED_TIME'],
+                 avg.iloc[index_num]['Closure'],
+                 ((avg.iloc[index_num]['ARR_DELAY'] +
+                   avg.iloc[index_num]['DEP_DELAY']) / 2.),
+                 avg.iloc[index_num]['CARRIER_DELAY'],
+                 avg.iloc[index_num]['WEATHER_DELAY'],
+                 avg.iloc[index_num]['NAS_DELAY'],
+                 avg.iloc[index_num]['CANCELLED'],
+                 avg.iloc[index_num]['LATE_AIRCRAFT_DELAY'],
+                 avg.iloc[index_num]['DISTANCE']])
+        for index_num in range(len(g_min)):
+            variable_dict[g_min.index[index_num]].append(
+                g_min.iloc[index_num]['date'])
+        for index_num in range(len(g_max)):
+            variable_dict[g_max.index[index_num]].append(
+                g_max.iloc[index_num]['date'])
+
+    else:
+        for index_num in range(len(count)):
+            # Flight totals
+            variable_dict[count.index[index_num]].append(
+                count.iloc[index_num]['CRSDepTime'])
+        for index_num in range(len(avg)):
+            variable_dict[avg.index[index_num]].extend(
+                [avg.iloc[index_num]['CRSElapsedTime'],
+                 avg.iloc[index_num]['ActualElapsedTime'],
+                 avg.iloc[index_num]['Closure'],
+                 ((avg.iloc[index_num]['ArrDelay'] +
+                   avg.iloc[index_num]['DepDelay']) / 2.),
+                 avg.iloc[index_num]['CarrierDelay'],
+                 avg.iloc[index_num]['WeatherDelay'],
+                 avg.iloc[index_num]['NASDelay'],
+                 avg.iloc[index_num]['Cancelled'],
+                 avg.iloc[index_num]['LateAircraftDelay'],
+                 avg.iloc[index_num]['Distance']])
+        for index_num in range(len(g_min)):
+            variable_dict[g_min.index[index_num]].append(
+                g_min.iloc[index_num]['date'])
+        for index_num in range(len(g_max)):
+            variable_dict[g_max.index[index_num]].append(
+                g_max.iloc[index_num]['date'])
 
     # Transforming the dictionary into a dataframe for the model, Assigning
     # column names
     df = pd.DataFrame.from_dict(variable_dict)
     df = df.T
     df.columns = Colnames
+    df['{}BlockTime'.format(year)] = df['{}CRSElapsedTime'.format(
+        year)] - df['{}ActualElapsedTime'.format(year)]
     # Lost 3 routes in 2004 this step, is ok (from some 2200)
     df.dropna(inplace=True)
 
@@ -174,14 +190,15 @@ def fix_conflicts(model_data, year_list):
             else:
                 wrong_closed_list.append(route)
 
-        # Creating a threshold to check final
+        # Creating a threshold to check final flight dates
         threshold = pd.to_datetime('{}-12-01'.format(str(year + 1)))
-        # flight dates against
         # Creating a new seasonal variable to indicate seasonal routes
         model_data['Seasonal'] = 0
         for route in wrong_closed_list:
+
             delta = (pd.to_datetime(model_data.loc[route][
                 '{}LastDate'.format(str(year))]) - pd.to_datetime(model_data.loc[route]['{}LastDate'.format(str(year + 1))]))
+
             delta2 = (pd.to_datetime(model_data.loc[route]['{}FirstDate'.format(str(
                 year))]) - pd.to_datetime(model_data.loc[route]['{}FirstDate'.format(str(year + 1))]))
             # I haven't checked why, but this if/else section doesn't work on exactly one
@@ -225,7 +242,7 @@ def fix_conflicts(model_data, year_list):
                 model_data.set_value(
                     route, '{}ClosureIndicator'.format(str(year)), 1)
 
-    #model_data.set_index('Unnamed: 0', inplace=True)
+    # model_data.set_index('Unnamed: 0', inplace=True)
     return model_data
 
 
@@ -243,11 +260,14 @@ def year_slice(data, year_list):
                 continue
 
             else:
-                for column in list(data.columns):
+                for num, column in enumerate(list(data.columns)):
 
                     if str(year) in column:
                         final_slice.append(column)
                         colnames.append(column[4:])
+                    if num > 88:
+                        final_slice.append(column)
+                        colnames.append(column)
 
                 final_slice.append('Seasonal')
                 colnames.append('Seasonal')
@@ -255,8 +275,6 @@ def year_slice(data, year_list):
                 break
 
     for column_list in final_list:
-        # import ipdb
-        # ipdb.set_trace()
         mini_df = data.loc[column_list[0]][column_list]
         mini_df = mini_df.to_frame()
         mini_df = mini_df.T
@@ -266,7 +284,10 @@ def year_slice(data, year_list):
         merge_data_list.append(mini_df)
 
     sliced_data = pd.concat(merge_data_list, axis=0, join='outer')
-
+    for route in sliced_data.index:
+        if data.loc[route]['UniqueCarrier'] == 'HP':
+            if pd.to_datetime(data.loc[route]['2005LastDate']) > pd.to_datetime('2005-12-25'):
+                data.set_value(route, '2005ClosureIndicator', 0)
     return sliced_data
 
 
@@ -276,8 +297,9 @@ def create_model_prepped_data(ontime_filepath_list, passenger_filepath_list, yea
     modelled.
     '''
     ontime_df_list = []
-    for filename in ontime_filepath_list:
-        ontime_df_list.append(fe.load_and_clean_ontime_data(filename))
+    for index, filename in enumerate(ontime_filepath_list):
+        ontime_df_list.append(
+            fe.load_and_clean_ontime_data(filename, year_list[index]))
     passenger_df_list = []
     for filename in passenger_filepath_list:
         passenger_df_list.append(dcp.load_and_clean_passenger_data(filename))
@@ -301,7 +323,7 @@ def create_model_prepped_data(ontime_filepath_list, passenger_filepath_list, yea
     elif len(ontime_df_list) > 1:
 
         for index in range(len(ontime_df_list)):
-            count, avg, g_min, g_max = groupby_data(ontime_df_list[0])
+            count, avg, g_min, g_max = groupby_data(ontime_df_list[index])
 
             ontime_stage_1 = create_ontime_model_variables(
                 count, avg, g_min, g_max, year_list[index])
@@ -337,5 +359,13 @@ def create_model_prepped_data(ontime_filepath_list, passenger_filepath_list, yea
         return None
 
 if __name__ == '__main__':
-    DATA = create_model_prepped_data(['../../../dev/data/2004_indicators.csv',
-                                      '../../../dev/data/2005_indicators.csv'], ['data/2004passengers.csv', 'data/2005passengers.csv'], range(2004, 2006))
+    DATA = create_model_prepped_data(['data/Ontime/2004_indicators.csv',
+                                      'data/Ontime/2005_indicators.csv',
+                                      'data/Ontime/2006_indicators.csv',
+                                      'data/Ontime/2007_indicators.csv',
+                                      'data/Ontime/2008_indicators.csv'],
+                                     ['data/Passengers/2004passengers.csv',
+                                      'data/Passengers/2005passengers.csv',
+                                      'data/Passengers/2006passengers.csv',
+                                      'data/Passengers/2007passengers.csv',
+                                      'data/Passengers/2008passengers.csv'], range(2004, 2009))

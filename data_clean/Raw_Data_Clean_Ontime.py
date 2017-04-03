@@ -47,12 +47,12 @@ def get_flight_routes(data, year):
         year * 10000 + 1 * 100 + 1, format='%Y%m%d'))
 
     # Creating a new route column in the df
-    data['route'] = data['Unique_Carrier'] + \
-        ' ' + data['Origin'] + ' ' + data['Dest']
+    data['route'] = data['UNIQUE_CARRIER'] + \
+        ' ' + data['ORIGIN'] + ' ' + data['DEST']
 
     # Creating a date column in the df
     data['date'] = pd.to_datetime(
-        data.Year * 10000 + data.Month * 100 + data.DayofMonth, format='%Y%m%d')
+        data.YEAR * 10000 + data.MONTH * 100 + data.DAY_OF_MONTH, format='%Y%m%d')
 
     # testing the dates for each route
     for num, date in enumerate(data['date']):
@@ -173,20 +173,13 @@ def clean_raw_data(filepath, filename, year, drop_list, subset=None):
     original_df = load_data(filepath, subset)
     routes = get_flight_routes(original_df, year)
     labeled_data = create_closure_column(routes, original_df, year)
-    cleaned_labeled_data = clean_data(labeled_data)
-    save_new_csv(cleaned_labeled_data, filename)
+    save_new_csv(labeled_data, filename)
     write_file_to_bucket('flight-final-project',
-                         cleaned_labeled_data, filename)
+                         labeled_data, filename)
 
-    return cleaned_labled_data
-
-
-def create_indicators(filepath, filename, drop_list=drop_list, year):
-    df = clean_raw_data(filepath, year, drop_list)
-    save_new_csv(df, filename)
-    write_file_to_bucket('flight-final-project', df, filename)
+    return labeled_data
 
 
 if __name__ == '__main__':
-    drop_list = ['YEAR', 'MONTH', 'DAY_OF_MONTH', 'CancellationCode']
-    clean_raw_data('2009.csv', '2009_indicators.csv', 2009, drop_list)
+    drop_list = ['YEAR', 'MONTH', 'DAY_OF_MONTH']
+    clean_raw_data('data/2009.csv', '2009_indicators.csv', 2009, drop_list)

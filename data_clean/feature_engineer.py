@@ -5,22 +5,42 @@ Carriers = ['AA', 'AS', 'B6', 'CO', 'DL', 'EV',
             'F9', 'HA', 'HP', 'NK', 'OO', 'UA', 'VX', 'WN', 'US']
 
 
-def load_and_clean_ontime_data(filename, subset=None):
-    data = pd.read_csv(filename, nrows=subset)
-    data = data[data['UniqueCarrier'].isin(Carriers)]
-    data = data[data['Closure'].isin([0, 1])]
-    data = data[data['Diverted'] == 0]
-    data['date'] = pd.to_datetime(data['date'])
-    data.sort_values(by=['Origin', 'UniqueCarrier', 'Dest'], inplace=True)
-    route_dict = defaultdict(list)
-    routes = []
-    for route in data['route'].unique():
-        route_dict[''.join(sorted(route))].append(route)
-    for route in data['route']:
-        routes.append(route_dict[''.join(sorted(route))][0])
-    data['route'] = routes
+def load_and_clean_ontime_data(filename, year, subset=None):
 
-    return data
+    # for some reason the years I downloaded after 2008 have different column
+    # names
+    if year > 2008:
+        data = pd.read_csv(filename, nrows=subset)
+        data = data[data['UNIQUE_CARRIER'].isin(Carriers)]
+        data = data[data['Closure'].isin([0, 1])]
+        data = data[data['DIVERTED'] == 0]
+        data['date'] = pd.to_datetime(data['date'])
+        data.sort_values(by=['ORIGIN', 'UNIQUE_CARRIER', 'DEST'], inplace=True)
+        route_dict = defaultdict(list)
+        routes = []
+        for route in data['route'].unique():
+            route_dict[''.join(sorted(route))].append(route)
+        for route in data['route']:
+            routes.append(route_dict[''.join(sorted(route))][0])
+        data['route'] = routes
+
+        return data
+    else:
+        data = pd.read_csv(filename, nrows=subset)
+        data = data[data['UniqueCarrier'].isin(Carriers)]
+        data = data[data['Closure'].isin([0, 1])]
+        data = data[data['Diverted'] == 0]
+        data['date'] = pd.to_datetime(data['date'])
+        data.sort_values(by=['Origin', 'UniqueCarrier', 'Dest'], inplace=True)
+        route_dict = defaultdict(list)
+        routes = []
+        for route in data['route'].unique():
+            route_dict[''.join(sorted(route))].append(route)
+        for route in data['route']:
+            routes.append(route_dict[''.join(sorted(route))][0])
+        data['route'] = routes
+
+        return data
 
 
 def get_carrier_dummies(data):
