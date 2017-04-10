@@ -24,6 +24,7 @@ def load_data(filepath, subset=None):
 
     I think you can figure out what's going on here
     '''
+
     data = pd.read_csv(filepath, nrows=subset)
     return data
 
@@ -54,7 +55,7 @@ def get_flight_routes(data, year):
     data['date'] = pd.to_datetime(
         data.YEAR * 10000 + data.MONTH * 100 + data.DAY_OF_MONTH, format='%Y%m%d')
 
-    # testing the dates for each route
+    # Testing the dates for each route
     for num, date in enumerate(data['date']):
 
         if route_start_dates[data['route'][num]] >= date:
@@ -63,6 +64,7 @@ def get_flight_routes(data, year):
         if route_end_dates[data['route'][num]] < date:
             route_end_dates[data['route'][num]] = date
 
+    # Merging the start and end dictionaries
     for route in route_start_dates.keys():
         if route in route_end_dates.keys():
             route_start_dates[route] = (route_start_dates[
@@ -80,11 +82,12 @@ def remove_columns(data, drop_list, convert_date=True):
     OUTPUT: pandas df w/ dropped columns
     '''
 
+    # Dropping extra columns
     data.drop(drop_list, axis=1, inplace=True)
 
+    # Converts date column to datetime object if arg is True
     if convert_date:
         data['date'] = pd.to_datetime(data['date'])
-
     return data
 
 
@@ -97,41 +100,49 @@ def create_closure_column(route_dates, data, year):
 
     The labels are later filtered and quality controlled in model_data_prep script
     '''
-    closure_column = []
 
     def create_closure_indicator(route_dates, year):
         '''
         INPUT: DICT: route start and end dates
+               INT: year the data describes
         OUTPUT: dictionary with closure indicators for each route
         '''
-        threshold = pd.to_datetime('{}-12-01'.format(str(year)))
-        for route in route_dates.keys():
 
-            if route_dates[route][1] == route_dates[route][0]:
+        # If most recent flight is before this threshold, route is
+        # considered closed
+        threshold = pd.to_datetime('{}-12-01'.format(str(year)))
+
+        # This loop adds closure indicators : -1 = not a route, 0 = open,
+        # 1 = closed
+        for route in route_dates.keys():
+            first_flight = route_dates[route][0]
+            last_flight = route_dates[route][1]
+
+            if last_flight == first_flight:
                 route_dates[route] = route_dates[route] + (-1,)
 
-            elif route_dates[route][1] < threshold:
+            elif last_flight < threshold:
                 route_dates[route] = route_dates[route] + (1,)
 
             else:
                 route_dates[route] = route_dates[route] + (0,)
 
         return route_dates
-
+    # Using function to create a dictionary of closure indicators
     closure_dict = create_closure_indicator(route_dates, year)
 
+    # Creating a list of closure indicators to add to the pandas df
+    closure_column = []
     for route in data['route']:
         closure_column.append(closure_dict[route][2])
 
+    # Creating new columns for pandas df
     data['Closure'] = pd.Series(closure_column)
+    data['{}FirstFlight'.format(str(year))]
+    data['{}LastFlight'.format(str(year))]
 
-    for index_num, indicator in enumerate(data['Closure']):
-        index_list = []
-
-        if indicator == -1:
-            index_list.append(index_num)
-
-    data.drop(data.index[index_list], inplace=True)
+    # Dropping rows with Closure value of -1
+    data = data[data.Closure != -1]
 
     return data
 
@@ -164,8 +175,10 @@ def write_file_to_bucket(bucketname, data, filepath):
 def clean_raw_data(filepath, filename, year, drop_list, subset=None):
     '''
     INPUT: STR: directory filepath
+           STR: name of file you want writted
            INT: the year of the data
            LIST: list of columns from data that you don't want
+           INT: subset of rows of csv you want to clean
     OUTPUT: Pandas Df
     run this function to take the csv and return a cleaned, labelled
     df
