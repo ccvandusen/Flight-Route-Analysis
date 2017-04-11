@@ -1,5 +1,5 @@
 ## Mile High Route Analysis
-![Graph Map](https://github.com/ccvandusen/Flight-Route-Analysis/blob/master/images/AIRWAY.jpeg)
+![Graph Map](https://github.com/ccvandusen/Flight-Route-Analysis/blob/master/images/airway.jpeg)
 
 This repo is a pipeline that takes data from the [Bureau of Transportation Statistics](https://www.transtats.bts.gov/), cleans and labels the data, and then trains a Random Forest Classifier to make predictions on route discontinuations.
 
@@ -15,7 +15,7 @@ The data for the model consists of 6-7 million flights / year from BTS's On-Time
 
 One of the biggest issues for building a classification model on this data was the temporal nature of it. In particular, many routes have only a few months of data, while many more have several years of data. 
 
-![Route Distributions](https://github.com/ccvandusen/Flight-Route-Analysis/blob/master/images/Closed_Route_Length_Distribution.png)
+![Route Distributions](https://github.com/ccvandusen/Flight-Route-Analysis/blob/master/images/closed-route-length-distribution.png)
 
 After attempting several methods of imputation and feature engineering to capture the temport nature, the final model aggregates the most recent six months of data to train on, as that method produced the best results.
 
