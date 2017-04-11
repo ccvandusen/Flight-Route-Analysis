@@ -9,7 +9,7 @@ For regional airports and the populations they service, direct routes to major h
 
 ### The Data:
 
-The data for the model consists of 6-7 million flights / year from BTS's On-Time Performance dataset and monthly aggregates of passenger and airplane statistics from BTS market segment dataset. The classifier has currently been trained on data from 2004-2012, with a test set of new routes from 2013. However, the databases are active and both update on a monthly basis so the model can be retrained on more recent data to produce better results. The data did not include route labels or closure indicators, so I had to engineer them for the model to predict on. To this end I used an AWS EC2 instance and stored all my engineered features on an S3 instance that I will provide publicly soon.
+The data for the model consists of 6-7 million flights / year from BTS's On-Time Performance dataset and monthly aggregates of passenger and airplane statistics from BTS market segment dataset. The classifier has currently been trained on data from 2004-2012, with a test set of new routes from 2013. However, the databases are active and both update on a monthly basis so the model can be retrained on more recent data to produce better results. The data did not include route labels or closure indicators, so I had to engineer them for the model to predict on. To this end I used an AWS EC2 instance and stored all my engineered features on an S3 instance. You can access sample data that has already run through my raw data clean script from 2004-2008 [here](https://drive.google.com/drive/folders/0B-Is4Z7_0qg_X3NoeTdEX3dwZG8?usp=sharing).
 
 ### The Model:
 
@@ -21,7 +21,8 @@ After attempting several methods of imputation and feature engineering to captur
 
 ### Results:
 
-After establishing a baseline 83% validation accuracy, with all features thrown into the model, I pruned the training variables down to performing 21 variables for the final model. I produced an 89.5% accuracy score, with a little over 85% on both precision and recall.
+After establishing a baseline 83% validation accuracy, with all features thrown into the model, I pruned the training variables down to performing 21 variables for the final model. Of those 21 features, the features that prodcued the best results were the average fill, or the average number of seats taken for a flight on a given route, and the average flight delay, or the difference between the scheduled (CRS) flight time and the actual flight time. You can view my feature importances here: ![Graph Map](https://github.com/ccvandusen/Flight-Route-Analysis/blob/master/images/feature-importances.png) 
+I produced an ***89.5% accuracy score***, with a little over 85% on both precision and recall.
 
 ### What Next:
 
