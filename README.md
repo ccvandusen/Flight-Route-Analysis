@@ -1,5 +1,5 @@
 ## Mile High Route Analysis
-![Graph Map](https://github.com/ccvandusen/Flight-Route-Analysis/blob/master/images/airway.jpeg)
+![Graph Map](https://github.com/ccvandusen/Flight-Route-Analysis/blob/master/images/AIRWAY.jpeg)
 
 This repo is a pipeline that takes data from the [Bureau of Transportation Statistics](https://www.transtats.bts.gov/), cleans and labels the data, and then trains a Random Forest Classifier to make predictions on route discontinuations.
 
