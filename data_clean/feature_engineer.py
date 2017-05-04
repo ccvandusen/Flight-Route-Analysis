@@ -6,53 +6,35 @@ Carriers = ['AA', 'AS', 'B6', 'CO', 'DL', 'EV',
 
 
 def load_and_clean_ontime_data(filename, year, subset=None):
-
     # for some reason the years I downloaded after 2008 have different column
     # names
-    if year > 2008:
-        data = pd.read_csv(filename, nrows=subset)
-        data = data[data['UNIQUE_CARRIER'].isin(Carriers)]
-        data = data[data['Closure'].isin([0, 1])]
-        data = data[data['DIVERTED'] == 0]
-        data['date'] = pd.to_datetime(data['date'])
-        data.sort_values(by=['ORIGIN', 'UNIQUE_CARRIER', 'DEST'], inplace=True)
-        route_dict = defaultdict(list)
-        routes = []
-        for route in data['route'].unique():
-            route_dict[''.join(sorted(route))].append(route)
-        for route in data['route']:
-            routes.append(route_dict[''.join(sorted(route))][0])
-        data['route'] = routes
+    data = pd.read_csv(filename, nrows=subset)
+    data = data[data['UNIQUE_CARRIER'].isin(Carriers)]
+    data = data[data['Closure'].isin([0, 1])]
+    data = data[data['DIVERTED'] == 0]
+    data['date'] = pd.to_datetime(data['date'])
+    data.sort_values(by=['ORIGIN', 'UNIQUE_CARRIER', 'DEST'], inplace=True)
+    route_dict = defaultdict(list)
+    routes = []
+    for route in data['route'].unique():
+        route_dict[''.join(sorted(route))].append(route)
+    for route in data['route']:
+        routes.append(route_dict[''.join(sorted(route))][0])
+    data['route'] = routes
 
-        return data
-    else:
-        data = pd.read_csv(filename, nrows=subset)
-        data = data[data['UniqueCarrier'].isin(Carriers)]
-        data = data[data['Closure'].isin([0, 1])]
-        data = data[data['Diverted'] == 0]
-        data['date'] = pd.to_datetime(data['date'])
-        data.sort_values(by=['Origin', 'UniqueCarrier', 'Dest'], inplace=True)
-        route_dict = defaultdict(list)
-        routes = []
-        for route in data['route'].unique():
-            route_dict[''.join(sorted(route))].append(route)
-        for route in data['route']:
-            routes.append(route_dict[''.join(sorted(route))][0])
-        data['route'] = routes
-
-        return data
+    return data
 
 
 def get_carrier_dummies(data):
     dummies_df = pd.concat(
-        [data, pd.get_dummies(data['UniqueCarrier'])], axis=1)
+        [data, pd.get_dummies(data['UNIQUE_CARRIER'])], axis=1)
     return dummies_df
 
 
 def hub_or_point_indicator(data):
     hub_system = []
     point_system = []
-    for Carrier in data['UniqueCarrier']:
+    for Carrier in data['UNIQUE_CARRIER']:
         if Carrier in ['WN', 'NK']:
             hub_system.append(0)
             point_system.append(1)
@@ -66,7 +48,7 @@ def hub_or_point_indicator(data):
 
 def regional_indicator(data):
     regional = []
-    for Carrier in data['UniqueCarrier']:
+    for Carrier in data['UNIQUE_CARRIER']:
         if Carrier in ['EV', 'OO']:
             regional.append(1)
         else:
@@ -101,8 +83,8 @@ def indicate_hubs(data):
     2 hubs, 1 otherwise.
 
     '''
-    g = data[['UniqueCarrier', 'Origin', 'Dest']].groupby([
-        'UniqueCarrier', 'Origin']).count()
+    g = data[['UNIQUE_CARRIER', 'Origin', 'Dest']].groupby([
+        'UNIQUE_CARRIER', 'Origin']).count()
     origin_pcts = g.groupby(level=0).apply(lambda x:
                                            100 * x / float(x.sum()))
     sorted_pct = origin_pcts['Dest'].groupby(level=0, group_keys=False)
@@ -112,13 +94,13 @@ def indicate_hubs(data):
     for index in xrange(len(top_hubs)):
         if top_hubs[index] > 5.0:
             hub_dict[top_hubs.index[index][0]].append(top_hubs.index[index][1])
-    for row in data[['UniqueCarrier', 'Origin', 'Dest']].iterrows():
-        if row[1]['Origin'] in hub_dict[row[1]['UniqueCarrier']]:
-            if row[1]['Dest'] in hub_dict[row[1]['UniqueCarrier']]:
+    for row in data[['UNIQUE_CARRIER', 'Origin', 'Dest']].iterrows():
+        if row[1]['Origin'] in hub_dict[row[1]['UNIQUE_CARRIER']]:
+            if row[1]['Dest'] in hub_dict[row[1]['UNIQUE_CARRIER']]:
                 hub_indicator.append(2)
                 continue  # so it doesn't append twice in this if clause
             hub_indicator.append(1)
-        elif row[1]['Dest'] in hub_dict[row[1]['UniqueCarrier']]:
+        elif row[1]['Dest'] in hub_dict[row[1]['UNIQUE_CARRIER']]:
             hub_indicator.append(1)
         else:
             hub_indicator.append(0)
