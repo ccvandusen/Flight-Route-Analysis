@@ -23,10 +23,52 @@ class RawDataClean(object):
         self.drop_list = drop_list
 
     def load_clean_data(self):
-        self.data = pd.read_csv(self.filepath, self.nrows)
+        data = pd.read_csv(self.filepath, self.nrows)
         if self.ontime:
-            routes = self.get_flight_routes()
-            self.
+            routes = self.get_flight_routes(data)
+            data = self.create_closure_column(routes, data)
+        if self.passenger:
+            data = self.clean_passenger_data(data)
+        self.data = data
+
+    def clean_passenger_data(data):
+        '''
+        INPUT: PANDAS DF: passenger load data from BTS
+        OUTPUT: cleaned dataframe with a avg_fill, route, and date column engineered
+        '''
+
+        # These are the types of aircraft used, the commercial passenger
+        # classes
+        Classes = ['A', 'C', 'E', 'F']
+
+        # filtering out rows that don't have the classes/carriers I want
+        data = data[data['UNIQUE_CARRIER'].isin(Carriers)]
+        data = data[data['CLASS'].isin(Classes)]
+
+        # Creating a route column
+        data['route'] = data['UNIQUE_CARRIER'] + \
+            ' ' + data['ORIGIN'] + ' ' + data['DEST']
+
+        # this block resolves route duplicates - so I don't have a route
+        # like US LAX JFK and a route like US JFK LAX, as they are the same
+        # route
+        data.sort_values(by=['ORIGIN', 'UNIQUE_CARRIER', 'DEST'], inplace=True)
+        route_dict = defaultdict(list)
+        routes = []
+        # Putting duplicates under one key
+        for route in data['route'].unique():
+            route_dict[''.join(sorted(route))].append(route)
+        # Making a route list with only one route name
+        for route in data['route']:
+            routes.append(route_dict[''.join(sorted(route))][0])
+
+        # Creating new columns for the data
+        data['route'] = routes
+        data['date'] = pd.to_datetime(
+            data.YEAR * 10000 + data.MONTH * 100 + 1, format='%Y%m%d')
+        data['avg_fill'] = data['PASSENGERS'] / data['SEATS']
+
+        return data
 
     def get_flight_routes(self, data):
         '''
@@ -39,7 +81,6 @@ class RawDataClean(object):
         # These are default dictionaries that have initial values of the first and last
         # day of the year of the df that are used to compare against for finding the
         # first and last day for each route in the df
-        data = self.data
         route_start_dates = defaultdict(lambda: pd.to_datetime(
             year * 10000 + 12 * 100 + 31, format='%Y%m%d'))
 
@@ -70,6 +111,60 @@ class RawDataClean(object):
                     route], route_end_dates[route])
 
         return route_start_dates
+
+    def create_closure_column(self, route_dates, data):
+        '''
+        INPUT: DICT: route start and end dates, created from get_flight_routes fxn
+               PANDAS DF: data to create indicators for
+        OUTPUT: new pandas df with route closure label column.
+
+        The labels are later filtered and quality controlled in model_data_prep script
+        '''
+        year = self.year
+
+        def create_closure_indicator(route_dates, year):
+            '''
+            INPUT: DICT: route start and end dates
+                   INT: year the data describes
+            OUTPUT: dictionary with closure indicators for each route
+            '''
+            # If most recent flight is before this threshold, route is
+            # considered closed
+            threshold = pd.to_datetime('{}-12-01'.format(str(year)))
+
+            # This loop adds closure indicators : -1 = not a route, 0 = open,
+            # 1 = closed
+            for route in route_dates.keys():
+                first_flight = route_dates[route][0]
+                last_flight = route_dates[route][1]
+
+                if last_flight == first_flight:
+                    route_dates[route] = route_dates[route] + (-1,)
+
+                elif last_flight < threshold:
+                    route_dates[route] = route_dates[route] + (1,)
+
+                else:
+                    route_dates[route] = route_dates[route] + (0,)
+
+            return route_dates
+        # Using function to create a dictionary of closure indicators
+        closure_dict = create_closure_indicator(route_dates, year)
+
+        # Creating a list of closure indicators to add to the pandas df
+        closure_column = []
+        for route in data['route']:
+            closure_column.append(closure_dict[route][2])
+
+        # Creating new columns for pandas df
+        data['Closure'] = pd.Series(closure_column)
+        data['{}FirstFlight'.format(str(year))]
+        data['{}LastFlight'.format(str(year))]
+
+        # Dropping rows with Closure value of -1
+        data = data[data.Closure != -1]
+
+        return data
 
     def remove_columns(data, drop_list, convert_date=True):
         '''
