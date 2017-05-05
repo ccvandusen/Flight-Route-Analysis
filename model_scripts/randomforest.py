@@ -74,6 +74,7 @@ def random_forest_cross_val(X, y, num_trees=50, max_features=3, folds=10, n_jobs
     print 'accuracy_scores : {}'.format(sum(accuracy) / len(accuracy))
     print 'precision_scores : {}'.format(sum(precision) / len(precision))
     print 'recall_scores : {}'.format(sum(recall) / len(recall))
+    return rf.fit(X, y)
 
 
 # if __name__ == '__main__':
