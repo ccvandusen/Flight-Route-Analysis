@@ -1,10 +1,9 @@
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV, cross_val_score
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.datasets import make_classification
 from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import cross_val_score
 import statsmodels.api as sm
 import matplotlib.pyplot as plt
 from datetime import datetime
@@ -61,8 +60,8 @@ def plot_ROC_curve(X_train, y_train, X_test, labels):
 def random_forest_cross_val(X, y, num_trees=50, max_features=3, folds=10, n_jobs=-1):
     '''
     INPUT: X,y
-    OUTPUT: score
-    This ALWAYS
+    OUTPUT: printed scores, fitted model
+    Prints out the accuracy, precision, and recall scores for a random forest on the data
     '''
     rf = RandomForestClassifier(
         n_estimators=num_trees, max_features=max_features, n_jobs=n_jobs)
@@ -75,6 +74,24 @@ def random_forest_cross_val(X, y, num_trees=50, max_features=3, folds=10, n_jobs
     print 'precision_scores : {}'.format(sum(precision) / len(precision))
     print 'recall_scores : {}'.format(sum(recall) / len(recall))
     return rf.fit(X, y)
+
+
+def grid_search(model):
+    '''
+    INPUT: sklearn object: fitted model to grid Search
+    OUTPUT: dict: contains the optimal parameters of the GridSearch
+            float: accuracy score of the model w/ optimal parameters
+    Implements a grid search
+    '''
+    # Parameters used to gridsearch, these are the optimized one for our final
+    # Boosted model
+    param_grid = {'n_estimators': [100, 200, 400], 'max_depth': [None, 1, 2, 4, 8], 'min_samples_leaf': [1, 9, 17],
+                  'max_features': [1.0, 0.3, 'auto']}
+
+    # Gridsearch object
+    gsearch1 = GridSearchCV(model, param_grid)
+
+    return gsearch1.best_params_, gsearch1.best_score_
 
 
 # if __name__ == '__main__':
