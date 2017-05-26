@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split, GridSearchCV, cross_val_score
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier,
 from sklearn.datasets import make_classification
 from sklearn.linear_model import LogisticRegression
 import statsmodels.api as sm
@@ -74,6 +74,24 @@ def random_forest_cross_val(X, y, num_trees=50, max_features=3, folds=10, n_jobs
     print 'precision_scores : {}'.format(sum(precision) / len(precision))
     print 'recall_scores : {}'.format(sum(recall) / len(recall))
     return rf.fit(X, y)
+
+
+def gradient_boost_cross_val(X, y, num_trees=50, folds=10):
+    '''
+    INPUT: data, parameters for sklearn's gradient boost
+    OUTPUT: cross validation scores for gradient boost
+    '''
+    gb = GradientBoosingClassifier(
+        n_estimators=num_trees, max_depth=3, folds=10)
+    accuracy = cross_val_score(rf, X, y, cv=folds, n_jobs=n_jobs)
+    precision = cross_val_score(
+        rf, X, y, cv=folds, scoring='precision')
+    recall = cross_val_score(
+        rf, X, y, cv=folds, scoring='recall')
+    print 'accuracy_scores : {}'.format(sum(accuracy) / len(accuracy))
+    print 'precision_scores : {}'.format(sum(precision) / len(precision))
+    print 'recall_scores : {}'.format(sum(recall) / len(recall))
+    return gb.fit(X, y)
 
 
 def grid_search(model):
