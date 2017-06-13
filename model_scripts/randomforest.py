@@ -76,13 +76,13 @@ def random_forest_cross_val(X, y, num_trees=50, max_features=3, folds=10, n_jobs
     return rf.fit(X, y)
 
 
-def gradient_boost_cross_val(X, y, num_trees=50, folds=10):
+def gradient_boost_cross_val(X, y, num_trees=50, folds=10, learning_rate=0.05, max_depth=4, min_samples_leaf=5, max_features=3):
     '''
     INPUT: data, parameters for sklearn's gradient boost
     OUTPUT: cross validation scores for gradient boost
     '''
     gb = GradientBoosingClassifier(
-        n_estimators=num_trees, max_depth=3, folds=10)
+        n_estimators=num_trees, max_depth=max_depth, learning_rate=learning_rate, min_samples_leaf=min_samples_leaf, max_features=max_features)
     accuracy = cross_val_score(rf, X, y, cv=folds, n_jobs=n_jobs)
     precision = cross_val_score(
         rf, X, y, cv=folds, scoring='precision')
