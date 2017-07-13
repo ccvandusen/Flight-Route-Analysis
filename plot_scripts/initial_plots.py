@@ -24,6 +24,8 @@ def plot_closure_times(df, year_list):
 
     return route_dict
 
+def
+
 
 if __name__ == '__main__':
     plot_flight_timeseries('data/0408modeldata.csv')
